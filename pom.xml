@@ -29,7 +29,7 @@
     <groupId>org.jboss.logbridge</groupId>
     <artifactId>jboss-logbridge</artifactId>
     <packaging>jar</packaging>
-    <version>1.0.1.GA</version>
+    <version>1.0.2.CR1-SNAPSHOT</version>
 
     <name>JBoss LogBridge</name>
 
