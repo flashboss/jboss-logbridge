@@ -22,8 +22,10 @@
 
 package org.jboss.logbridge;
 
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Collections;
+import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.Enumeration;
 import java.util.ResourceBundle;
@@ -31,6 +33,7 @@ import java.util.MissingResourceException;
 import java.text.MessageFormat;
 
 import java.util.logging.Handler;
+import java.util.logging.LogManager;
 import java.util.logging.LogRecord;
 import java.util.logging.Filter;
 import java.util.logging.Level;
@@ -118,10 +121,16 @@ public final class LogBridgeHandler extends Handler {
         final Logger rootLogger = Logger.getRootLogger();
         final LoggerRepository repository = rootLogger.getLoggerRepository();
         final Enumeration loggers = repository.getCurrentLoggers();
+        final Enumeration<String> jdkLoggerNames = LogManager.getLogManager().getLoggerNames();
+        final Set<String> removeLoggers = new HashSet<String>();
+        while (jdkLoggerNames.hasMoreElements()) {
+            removeLoggers.add(jdkLoggerNames.nextElement());
+        }
         while (loggers.hasMoreElements()) {
             final Logger logger = (Logger) loggers.nextElement();
             final String name = logger.getName();
             final java.util.logging.Logger jdkLogger = java.util.logging.Logger.getLogger(name);
+            removeLoggers.remove(name);
             final org.apache.log4j.Level targetLevel = logger.getLevel();
             if (targetLevel == null) {
                 if (log.isTraceEnabled()) {
@@ -137,10 +146,15 @@ public final class LogBridgeHandler extends Handler {
                 jdkLogger.setLevel(sourceLevel);
             }
         }
+        removeLoggers.remove("");
         final Level sourceLevel = levelMapper.getSourceLevelForTargetLevel(rootLogger.getLevel());
         if (log.isTraceEnabled()) {
             log.trace("Remapping root logger to JDK level \"" + sourceLevel + "\"");
         }
         this.rootLogger.setLevel(sourceLevel);
+        // clear levels for loggers which are no longer referenced in the configuration
+        for (String loggerName : removeLoggers) {
+            java.util.logging.Logger.getLogger(loggerName).setLevel(null);
+        }
     }
 }
