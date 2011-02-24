@@ -64,7 +64,9 @@ public final class LogNotificationListener implements NotificationListener {
     }
 
     public void handleNotification(final Notification notification, final Object handback) {
-        logBridgeHandler.updateLoggers();
+        if (notification.getType().equals("jboss.logging.log4j.reconfigure")) {
+            logBridgeHandler.updateLoggers();
+        }
     }
 
     public void start() throws InstanceNotFoundException {
